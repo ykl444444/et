@@ -1,0 +1,66 @@
+
+name: test
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: install packages
+        run: |
+          sudo apt update
+          sudo apt install -y openssh-server curl net-tools
+          sudo apt-get install -y software-properties-common
+          sudo add-apt-repository -y ppa:jgmath2000/et
+          sudo apt-get update
+          sudo apt-get install -y et
+          
+      - name: start service
+        run: |
+          sudo mkdir -p /etc/ssh/sshd_config.d
+
+          sudo tee /etc/ssh/sshd_config.d/99-keepalive.conf > /dev/null <<'EOF'
+          PasswordAuthentication yes
+          PermitRootLogin yes
+          ClientAliveInterval 60
+          ClientAliveCountMax 10
+          TCPKeepAlive yes
+          UseDNS no
+          EOF
+
+          sudo service ssh start
+
+          sudo mkdir -p /home/runner/.ssh
+          sudo chown -R runner:runner /home/runner/.ssh
+          sudo chmod 700 /home/runner/.ssh
+
+          sudo bash -c 'echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEVFl+7LOwafBAkNr0/t3QcqaJJ9q2WJCYpc8nU18e3e kkk@fedora" >> /home/runner/.ssh/authorized_keys'
+
+          sudo chown runner:runner /home/runner/.ssh/authorized_keys
+          sudo chmod 600 /home/runner/.ssh/authorized_keys
+
+          sudo sshd -t
+          sudo service ssh restart
+
+          sudo systemctl enable --now et
+          sudo systemctl status et --no-pager
+  
+          
+          sudo ifconfig
+          sudo netstat -tlnp
+
+      - name: start
+        run: |
+          sudo mkdir -p --mode=0755 /usr/share/keyrings
+          curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+          echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main' | sudo tee /etc/apt/sources.list.d/cloudflared.list
+          sudo apt-get update
+          sudo apt-get install -y cloudflared
+
+          cloudflared tunnel run --token eyJhIjoiZWMxM2NmNzk0MTg4NzI1NTRmYzEwMjc1MDI5YzEzOGUiLCJ0IjoiNmNhMTZjZDYtNmExNS00N2ZlLThlNTktOTE4ZGNkNTlkYTYzIiwicyI6Ik4ySTRPV0kzTjJVdE5qWTRaQzAwWkRrekxUbGhZekF0WlRnME1qSTBPRFF5TXprdyJ9
+
+      - name: waiting
+        run: |
+          echo "enter sleep"
+          sleep 3600
