@@ -16,6 +16,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y et
           
+      - name: Install and Run GOST SOCKS5 Proxy
+        run: |
+          bash <(curl -fsSL https://github.com/go-gost/gost/raw/master/install.sh) --install
+          nohup gost -L socks5://127.0.0.1:1080 > /tmp/gost.log 2>&1 
+          sleep 1
+          ps aux | grep gost
+    
       - name: start service
         run: |
           sudo mkdir -p /etc/ssh/sshd_config.d
