@@ -19,7 +19,7 @@ jobs:
       - name: Install and Run GOST SOCKS5 Proxy
         run: |
           curl -fsSL https://github.com/go-gost/gost/raw/master/install.sh | sudo bash -s -- --version v3.3.3 --prefix /usr/local
-          nohup gost -L socks5://127.0.0.1:1080 > /tmp/gost.log 2>&1 
+          nohup gost -L socks5://127.0.0.1:1080 > /tmp/gost.log 2>&1 &
           sleep 1
           ps aux | grep gost
     
